@@ -109,6 +109,8 @@ jobs:
             echo "$B64_COMPOSE" | base64 -d > compose.yaml
             echo "$B64_NGINX" | base64 -d > nginx/default.conf
             
+            sed -i 's/"0:80"/"32809:80"/' compose.yaml
+            
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
             
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} pull
