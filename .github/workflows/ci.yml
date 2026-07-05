@@ -75,24 +75,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Copy Compose and Nginx files to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          password: ${{ secrets.DEPLOY_PASSWORD }}
-          port: ${{ secrets.DEPLOY_SSH_PORT }}
-          source: "compose.yaml,nginx/default.conf"
-          target: ${{ secrets.DEPLOY_PATH }}
+      - name: Prepare file contents
+        run: |
+          echo 'COMPOSE_FILE<<EOF' >> $GITHUB_ENV
+          cat compose.yaml >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
           
+          echo 'NGINX_FILE<<EOF' >> $GITHUB_ENV
+          cat nginx/default.conf >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          COMPOSE_FILE: ${{ env.COMPOSE_FILE }}
+          NGINX_FILE: ${{ env.NGINX_FILE }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
+          envs: COMPOSE_FILE,NGINX_FILE
           script: |
+            mkdir -p ${{ secrets.DEPLOY_PATH }}/nginx
             cd ${{ secrets.DEPLOY_PATH }}
+            
+            echo "$COMPOSE_FILE" > compose.yaml
+            echo "$NGINX_FILE" > nginx/default.conf
+            
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} pull
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} up -d
