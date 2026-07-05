@@ -1,6 +1,6 @@
 services:
   api:
-    build: .
+    image: ghcr.io/noticyfalcon/csot-w3-starter/api:latest
     restart: always
     volumes:
       - ./data:/app/instance

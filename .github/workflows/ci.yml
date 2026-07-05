@@ -73,6 +73,18 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      
+      - name: Copy Compose and Nginx files to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: ${{ secrets.DEPLOY_SSH_PORT }}
+          source: "compose.yaml,nginx/default.conf"
+          target: ${{ secrets.DEPLOY_PATH }}
+          
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -82,7 +94,5 @@ jobs:
           port: ${{ secrets.DEPLOY_SSH_PORT }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            # Pull the latest code (including the updated VERSION file)
-            git pull origin main
-            # Rebuild and restart the containers
-            docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} up -d --build
+            docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} pull
+            docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} up -d
