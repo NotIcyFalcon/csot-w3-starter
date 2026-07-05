@@ -44,3 +44,7 @@ def test_get_items(client):
     response = client.get("/api/items")
     assert response.status_code == 200
     jsonschema.validate(instance=response.get_json(), schema=schema)
+    
+def test_404_not_found(client):
+    response = client.get("/api/this_route_does_not_exist")
+    assert response.status_code == 404
