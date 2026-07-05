@@ -75,15 +75,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Prepare file contents
+      - name: Prepare file contents (Base64)
         run: |
-          echo 'COMPOSE_FILE<<EOF' >> $GITHUB_ENV
-          cat compose.yaml >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
-          
-          echo 'NGINX_FILE<<EOF' >> $GITHUB_ENV
-          cat nginx/default.conf >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          echo "COMPOSE_FILE=$(base64 -w 0 compose.yaml)" >> $GITHUB_ENV
+          echo "NGINX_FILE=$(base64 -w 0 nginx/default.conf)" >> $GITHUB_ENV
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -100,8 +95,8 @@ jobs:
             mkdir -p ${{ secrets.DEPLOY_PATH }}/nginx
             cd ${{ secrets.DEPLOY_PATH }}
             
-            echo "$COMPOSE_FILE" > compose.yaml
-            echo "$NGINX_FILE" > nginx/default.conf
+            echo "$COMPOSE_FILE" | base64 -d > compose.yaml
+            echo "$NGINX_FILE" | base64 -d > nginx/default.conf
             
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} pull
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} up -d
