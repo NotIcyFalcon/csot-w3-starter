@@ -75,28 +75,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Prepare file contents (Base64)
+      - name: Prepare file contents
         run: |
-          echo "COMPOSE_FILE=$(base64 -w 0 compose.yaml)" >> $GITHUB_ENV
-          echo "NGINX_FILE=$(base64 -w 0 nginx/default.conf)" >> $GITHUB_ENV
+          echo "B64_COMPOSE=$(base64 -w 0 compose.yaml)" >> $GITHUB_ENV
+          echo "B64_NGINX=$(base64 -w 0 nginx/default.conf)" >> $GITHUB_ENV
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
-          COMPOSE_FILE: ${{ env.COMPOSE_FILE }}
-          NGINX_FILE: ${{ env.NGINX_FILE }}
+          B64_COMPOSE: ${{ env.B64_COMPOSE }}
+          B64_NGINX: ${{ env.B64_NGINX }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           password: ${{ secrets.DEPLOY_PASSWORD }}
           port: ${{ secrets.DEPLOY_SSH_PORT }}
-          envs: COMPOSE_FILE,NGINX_FILE
+          envs: B64_COMPOSE,B64_NGINX
           script: |
-            mkdir -p ${{ secrets.DEPLOY_PATH }}/nginx
+            sudo mkdir -p ${{ secrets.DEPLOY_PATH }}/nginx
+            sudo chown -R $USER:$USER ${{ secrets.DEPLOY_PATH }}
             cd ${{ secrets.DEPLOY_PATH }}
             
-            echo "$COMPOSE_FILE" | base64 -d > compose.yaml
-            echo "$NGINX_FILE" | base64 -d > nginx/default.conf
+            echo "$B64_COMPOSE" | base64 -d > compose.yaml
+            echo "$B64_NGINX" | base64 -d > nginx/default.conf
             
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} pull
             docker compose -p ${{ secrets.COMPOSE_PROJECT_NAME }} up -d
