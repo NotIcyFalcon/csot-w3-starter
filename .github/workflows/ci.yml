@@ -68,7 +68,7 @@ jobs:
           push: ${{ github.event_name == 'push' }} 
           tags: ghcr.io/noticyfalcon/csot-w3-starter/api:latest
 
-deploy:
+  deploy:
     needs: build-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
